@@ -82,4 +82,13 @@ public function sendRequest($numQuizzes = 1)
         // Return the array of quiz objects.
         return $quizObjects;
     }
+
+    public function getQuizzes(Request $request)
+    {
+        // Call the `sendRequest` method to generate the quizzes.
+        $quizzes = $this->sendRequest();
+
+        // Return the quizzes as a JSON response with a 200 status code.
+        return response()->json($quizzes, 200);
+    }
 }
