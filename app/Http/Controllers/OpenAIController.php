@@ -47,18 +47,24 @@ class OpenAIController extends Controller
 
         // Parse the quiz into individual question, options, and correct answer variables.
         preg_match('/\[ \{ \"question\": \"(.+)\", \"options\": \[(.+)\], \"correct\": \"(.+)\" \} \]/s', $generatedQuiz, $matches);
-        $question = $matches[1];
-        $options = explode(', ', $matches[2]);
-        $correctAnswer = $matches[3];
 
-        // Compile the variables into a new JSON response.
-        $newJsonResponse = [
-            'question' => $question,
-            'options' => $options,
-            'correct_answer' => $correctAnswer,
-        ];
+        if (isset($matches[1], $matches[2], $matches[3])) {
+            $question = $matches[1];
+            $options = explode(', ', $matches[2]);
+            $correctAnswer = $matches[3];
 
-        // Return the new JSON response.
-        return response()->json($newJsonResponse);
+            // Compile the variables into a new JSON response.
+            $newJsonResponse = [
+                'question' => $question,
+                'options' => $options,
+                'correct_answer' => $correctAnswer,
+            ];
+
+            // Return the new JSON response.
+            return response()->json($newJsonResponse);
+        } else {
+            // Handle the case where the expected keys do not exist.
+            return response()->json(['error' => 'Unable to parse quiz.']);
+        }
     }
 }
