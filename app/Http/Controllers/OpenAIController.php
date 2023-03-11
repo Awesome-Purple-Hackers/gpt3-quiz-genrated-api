@@ -22,7 +22,7 @@ class OpenAIController extends Controller
                 'Authorization' => 'Bearer ' . env('OPENAI_API_SECRET'),
             ],
         ]);
-    
+
         // Set up the request data.
         $requestData = [
             'model' => 'text-davinci-003',
@@ -33,11 +33,11 @@ class OpenAIController extends Controller
             'frequency_penalty' => 0,
             'presence_penalty' => 0,
         ];
-    
+
         // Send the request to the OpenAI API using the Guzzle client.
         $response = $client->post('completions', [
             'json' => $requestData,
-            ]);
+        ]);
 
         // Get the response body.
         $responseBody = json_decode($response->getBody(), true);
@@ -45,9 +45,20 @@ class OpenAIController extends Controller
         // Extract the generated quiz from the response body.
         $generatedQuiz = $responseBody['choices'][0]['text'];
 
-        // Return the generated quiz in JSON format.
-        return response()->json([
-            'quiz' => $generatedQuiz,
-        ]);
+        // Parse the quiz into individual question, options, and correct answer variables.
+        preg_match('/\[ \{ \"question\": \"(.+)\", \"options\": \[(.+)\], \"correct\": \"(.+)\" \} \]/s', $generatedQuiz, $matches);
+        $question = $matches[1];
+        $options = explode(', ', $matches[2]);
+        $correctAnswer = $matches[3];
+
+        // Compile the variables into a new JSON response.
+        $newJsonResponse = [
+            'question' => $question,
+            'options' => $options,
+            'correct_answer' => $correctAnswer,
+        ];
+
+        // Return the new JSON response.
+        return response()->json($newJsonResponse);
     }
 }
