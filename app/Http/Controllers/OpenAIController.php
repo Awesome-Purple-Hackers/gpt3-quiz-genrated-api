@@ -7,14 +7,13 @@ use GuzzleHttp\Client;
 
 class OpenAIController extends Controller
 {
-    /**
-     * Send a request to the OpenAI GPT model and return the response as an array of JSON objects.
-     *
-     * @param int $numQuizzes The number of quizzes to generate.
-     * @param string $quizDomain The domain of the quiz prompts to generate.
-     * @return array
-     */
-    public function sendRequest($numQuizzes = 1, $quizDomain = 'math')
+/**
+ * Send a request to the OpenAI GPT model and return the response as an array of JSON objects.
+ *
+ * @param int $numQuizzes The number of quizzes to generate.
+ * @return array
+ */
+public function sendRequest($numQuizzes = 1)
     {
         // Set up the Guzzle client with the appropriate base URI and authentication headers.
         $client = new Client([
@@ -28,7 +27,7 @@ class OpenAIController extends Controller
         // Set up the request data.
         $requestData = [
             'model' => 'text-davinci-003',
-            'prompt' => "I want you to create a quiz consisting of 1 question related to anything I tell you. The quiz should have this structure: [Question x][4 answers, numbered a,b,c,d][The letter of the correct answer] The answers should be as factual and accurate as possible, without ambiguity or falsehoods. Only return the quiz in exactly this format: {question:'', answer1:'', answer2:'', answer3:'', answer4:'', correct_answer:''}. Do not modify the format just fill between each '' of each element with the correct values. The subject is $quizDomain. Do not return anything else, just the json.\n\n",
+            'prompt' => 'I want you to create a quiz consisting of 1 question related to anything I tell you. The quiz should have this structure: [Question x][4 answers, numbered a,b,c,d][The letter of the correct answer] The answers should be as factual and accurate as possible, without ambiguity or falsehoods. Only return the quiz in exactly this format: {question:"", answer1:"", answer2:"", answer3:"", answer4:"", correct_answer:""}. Do not modify the format just fill between each "" of each element with the correct values.  The subject is math. Do not return anything else, just the json.\n\n',
             'temperature' => 0.7,
             'max_tokens' => 656,
             'top_p' => 1,
@@ -70,26 +69,20 @@ class OpenAIController extends Controller
                 'answer4' => $matches[1][4],
                 'correct_answer' => $matches[1][5],
             ];
-    
+
             // Add the quiz object to the array.
             $quizObjects[] = $quizObject;
         }
-    
+
         // If the number of quizzes requested is greater than 1, return a random sample of that many quizzes.
         if ($numQuizzes > 1) {
             $quizObjects = array_rand($quizObjects, $numQuizzes);
         }
-    
+
         // Return the array of quiz objects.
         return $quizObjects;
     }
-    
-    /**
-     * Generate quiz prompts using the OpenAI API and return them as a JSON response.
-     *
-     * @param Request $request The HTTP request object.
-     * @return \Illuminate\Http\JsonResponse
-     */
+
     public function getQuizzes(Request $request)
     {
         // Get the `$quizDomain` parameter from the request query parameters.
@@ -100,5 +93,5 @@ class OpenAIController extends Controller
     
         // Return the quizzes as a JSON response with a 200 status code.
         return response()->json($quizzes, 200);
-    }
-}    
+    }    
+}
