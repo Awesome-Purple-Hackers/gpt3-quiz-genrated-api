@@ -45,22 +45,9 @@ class OpenAIController extends Controller
         // Extract the generated quiz from the response body.
         $generatedQuiz = $responseBody['choices'][0]['text'];
 
-        // Decode the JSON response
-        $quizData = json_decode($response->getBody(), true);
-
-        // Extract the quiz array from the decoded data
-        $quiz = $quizData['quiz'];
-
-        // Convert each question object to the desired format
-        $quiz = array_map(function ($question) {
-            return [
-                'question' => $question['question'],
-                'options' => $question['options'],
-                'correct' => $question['correct']
-            ];
-        }, $quiz);
-
-        // Return the transformed quiz in JSON format
-        return response()->json($quiz);
+        // Return the generated quiz in JSON format.
+        return response()->json([
+            'quiz' => $generatedQuiz,
+        ]);
     }
 }
