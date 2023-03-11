@@ -34,13 +34,22 @@ class OpenAIController extends Controller
             'presence_penalty' => 0,
         ];
     
-        // Send the request to the OpenAI GPT model.
-        $response = $client->request('POST', 'completions', [
+        // Send the request to the OpenAI API using the Guzzle client.
+        $response = $client->post('completions', [
             'json' => $requestData,
+            ]);
+
+                // Get the response body.
+        $responseBody = json_decode($response->getBody(), true);
+
+        // Extract the generated quiz from the response body.
+        $generatedQuiz = $responseBody['choices'][0]['text'];
+
+        // Return the generated quiz in JSON format.
+        return response()->json([
+            'quiz' => $generatedQuiz,
         ]);
-    
-        // Return the response in JSON format.
-        return response()->json(json_decode($response->getBody()->getContents()));
     }
+
     
 }
