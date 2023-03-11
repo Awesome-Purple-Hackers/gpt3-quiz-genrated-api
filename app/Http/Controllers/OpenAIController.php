@@ -113,24 +113,37 @@ public function sendRequest($numQuizzes = 1)
         // Call the `sendRequest` method to generate the quizzes, passing the `$quizDomain` variable.
         $quizzes = $this->sendRequest(1, $quizDomain);
     
-        // Loop through the quizzes and create a new Quiz model for each one, then save it to the database.
+        // Create a new array to store the Quiz model IDs for the quizzes.
+        $quizIds = [];
+    
+        // Loop through the quizzes and create a new Quiz model for each one, then save it to the database if it doesn't already exist.
         foreach ($quizzes as $quiz) {
-            $quizModel = new Quiz();
-            $quizModel->question = $quiz['question'];
-            $quizModel->options = $quiz['options'];
-            $quizModel->correct_answer = $quiz['options'][array_search(true, array_column($quiz['options'], 'isCorrect'))]['answer'];
-            $quizModel->save();
+            $quizModel = Quiz::where('question', $quiz['question'])->first();
+    
+            if (!$quizModel) {
+                $quizModel = new Quiz();
+                $quizModel->question = $quiz['question'];
+                $quizModel->options = $quiz['options'];
+                $quizModel->correct_answer = $quiz['options'][array_search(true, array_column($quiz['options'], 'isCorrect'))]['answer'];
+                $quizModel->save();
+            }
+    
+            // Add the Quiz model ID to the array.
+            $quizIds[] = $quizModel->id;
         }
     
+        // Retrieve the Quiz models from the database.
+        $quizModels = Quiz::whereIn('id', $quizIds)->get();
+    
         // Transform the quizzes to the required format.
-        $formattedQuizzes = array_map(function ($quiz) {
+        $formattedQuizzes = array_map(function ($quizModel) {
             return [
-                'question' => $quiz['question'],
-                'options' => $quiz['options'],
+                'question' => $quizModel->question,
+                'options' => $quizModel->options,
             ];
-        }, $quizzes);
+        }, $quizModels->toArray());
     
         // Return the quizzes as a JSON response with a 200 status code.
         return response()->json($formattedQuizzes, 200);
-    }         
+    }          
 }
