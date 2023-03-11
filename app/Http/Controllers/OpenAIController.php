@@ -13,7 +13,7 @@ class OpenAIController extends Controller
  * @param int $numQuizzes The number of quizzes to generate.
  * @return array
  */
-public function sendRequest($numQuizzes = 1)
+    public function sendRequest($numQuizzes = 1)
     {
         // Set up the Guzzle client with the appropriate base URI and authentication headers.
         $client = new Client([
@@ -64,9 +64,6 @@ public function sendRequest($numQuizzes = 1)
             $quizObject = [
                 'question' => $matches[1][0],
                 'answer' => $matches[1][1],
-                'answer' => $matches[1][2],
-                'answer' => $matches[1][3],
-                'answer' => $matches[1][4],
                 'correct_answer' => $matches[1][5],
             ];
 
