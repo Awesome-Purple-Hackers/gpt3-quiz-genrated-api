@@ -110,25 +110,27 @@ public function sendRequest($numQuizzes = 1)
         // Get the $quizDomain parameter from the request query parameters.
         $quizDomain = $request->query('quiz_domain');
     
-        // Retrieve the quizzes from the database.
-        $quizzes = Quiz::all();
+        // Call the `sendRequest` method to generate the quizzes, passing the `$quizDomain` variable.
+        $quizzes = $this->sendRequest(1, $quizDomain);
     
-        // If the $quizDomain parameter is set, filter the quizzes by domain.
-        if ($quizDomain) {
-            $quizzes = $quizzes->filter(function ($quiz) use ($quizDomain) {
-                return stripos($quiz->question, $quizDomain) !== false;
-            });
+        // Loop through the quizzes and create a new Quiz model for each one, then save it to the database.
+        foreach ($quizzes as $quiz) {
+            $quizModel = new Quiz();
+            $quizModel->question = $quiz['question'];
+            $quizModel->options = $quiz['options'];
+            $quizModel->correct_answer = $quiz['options'][array_search(true, array_column($quiz['options'], 'isCorrect'))]['answer'];
+            $quizModel->save();
         }
     
         // Transform the quizzes to the required format.
-        $formattedQuizzes = $quizzes->map(function ($quiz) {
+        $formattedQuizzes = array_map(function ($quiz) {
             return [
-                'question' => $quiz->question,
-                'options' => $quiz->options,
+                'question' => $quiz['question'],
+                'options' => $quiz['options'],
             ];
-        })->toArray();
+        }, $quizzes);
     
         // Return the quizzes as a JSON response with a 200 status code.
         return response()->json($formattedQuizzes, 200);
-    }      
+    }         
 }
