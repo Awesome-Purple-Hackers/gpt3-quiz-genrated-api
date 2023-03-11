@@ -47,10 +47,10 @@ class OpenAIController extends Controller
     
         // Parse the generated quiz into an array of questions and answers.
         $questions = [];
-        preg_match_all('/\[([^\[\]]+)\]\[([^\[\]]+)\]\[([^\[\]]+)\]/', $generatedQuiz, $matches, PREG_SET_ORDER);
+        preg_match_all('/\[(.+?)\]\[([^\[\]]+)\]\[(.+?)\]/', $generatedQuiz, $matches, PREG_SET_ORDER);
         foreach ($matches as $match) {
             $question = trim($match[1]);
-            $options = array_map('trim', explode(',', $match[2]));
+            $options = array_map('trim', explode(';', $match[2]));
             $correct = trim($match[3]);
             $questions[] = [
                 'question' => $question,
