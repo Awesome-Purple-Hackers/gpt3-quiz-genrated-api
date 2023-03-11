@@ -29,7 +29,7 @@ public function sendRequest($numQuizzes = 1, $saveToDb = true)
     // Set up the request data.
     $requestData = [
         'model' => 'text-davinci-003',
-        'prompt' => 'I want you to create a quiz consisting of 1 question related to anything I tell you. The quiz should have this structure: [Question x][4 answers, numbered a,b,c,d][The letter of the correct answer] The answers should be as factual and accurate as possible, without ambiguity or falsehoods. Only return the quiz in exactly this format: {question:"", answers:["", "", "", ""], correct_answer:""}. The correct answer should always be noted just with the corespondence character, between, "a", "b", "c" and "d" and always lowercase and one digit caracters. characters Do not modify the format just fill between each "" of each element with the correct values. The subject is math. Do not return anything else, just the list.',
+        'prompt' => 'I want you to create a quiz consisting of 1 question related to anything I tell you. The quiz should have this structure: [Question x][4 answers, numbered a,b,c,d][The letter of the correct answer] The answers should be as factual and accurate as possible, without ambiguity or falsehoods. Only return the quiz in exactly this format: {question:"", answers:["", "", "", ""], correct_answer:""}. The correct answer should always be noted just with the corespondence character, between, "a", "b", "c" and "d" and always lowercase caracters. Do not modify the format just fill between each "" of each element with the correct values. The subject is math. Do not return anything else, just the list.',
         'temperature' => 0.7,
         'max_tokens' => 656,
         'top_p' => 1,
