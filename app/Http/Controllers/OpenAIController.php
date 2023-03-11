@@ -57,6 +57,9 @@ public function sendRequest($numQuizzes = 1, $saveToDb = true)
     // Create a new array to store the JSON objects for each quiz.
     $quizObjects = [];
 
+    // Initialize the $quizModel variable with a default value of null.
+    $quizModel = null;
+
     // Loop through the quizzes and create a new JSON object for each one.
     foreach ($quizzes as $quiz) {
         // Extract the quiz values from the string.
@@ -68,48 +71,50 @@ public function sendRequest($numQuizzes = 1, $saveToDb = true)
         // If a quiz with the same question already exists, skip saving the quiz to avoid duplicates.
         if (!$existingQuiz) {
             // Create a new quiz object and save it to the database.
-            $quizModel = Quiz::create([
-                'question' => $matches[1][0],
-                'options' => [
-                    [
-                        'answer' => $matches[1][1],
-                        'isCorrect' => $matches[1][5] === 'a',
-                    ],
-                    [
-                        'answer' => $matches[1][2],
-                        'isCorrect' => $matches[1][5] === 'b',
-                    ],
-                    [
-                        'answer' => $matches[1][3],
-                        'isCorrect' => $matches[1][5] === 'c',
-                    ],
-                    [
-                        'answer' => $matches[1][4],
-                        'isCorrect' => $matches[1][5] === 'd',
-                    ],
-                ],
-                'correct_answer' => $matches[1][5],
+        $quizModel = Quiz::create([
+            'question' => $matches[1][0],
+            'options' => [
+            [
+            'answer' => $matches[1][1],
+            'isCorrect' => $matches[1][5] === 'a',
+            ],
+            [
+            'answer' => $matches[1][2],
+            'isCorrect' => $matches[1][5] === 'b',
+            ],
+            [
+            'answer' => $matches[1][3],
+            'isCorrect' => $matches[1][5] === 'c',
+            ],
+            [
+            'answer' => $matches[1][4],
+            'isCorrect' => $matches[1][5] === 'd',
+            ],
+            ],
+            'correct_answer' => $matches[1][5],
             ]);
-        }
+            }
+                // Create a new JSON object for the quiz if $quizModel is not null.
+                if ($quizModel !== null) {
+                    $quizObject = [
+                        'question' => $quizModel->question,
+                        'options' => $quizModel->options,
+                    ];
 
-        // Create a new JSON object for the quiz.
-        $quizObject = [
-            'question' => $quizModel->question,
-            'options' => $quizModel->options,
-        ];
+                    // Add the quiz object to the array.
+                    $quizObjects[] = $quizObject;
+                }
+            }
 
-        // Add the quiz object to the array.
-        $quizObjects[] = $quizObject;
-    }
+            // If the number of quizzes requested is greater than 1, return a random sample of that many quizzes.
+            if ($numQuizzes > 1) {
+                $quizObjects = array_rand($quizObjects, $numQuizzes);
+            }
 
-    // If the number of quizzes requested is greater than 1, return a random sample of that many quizzes.
-    if ($numQuizzes > 1) {
-        $quizObjects = array_rand($quizObjects, $numQuizzes);
-    }
+            // Return the array of quiz objects.
+            return $quizObjects;
 
-    // Return the array of quiz objects.
-    return $quizObjects;
-    }
+
 
     public function getQuizzes(Request $request)
     {
