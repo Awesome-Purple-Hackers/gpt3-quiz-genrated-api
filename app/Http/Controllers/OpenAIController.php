@@ -7,13 +7,13 @@ use GuzzleHttp\Client;
 
 class OpenAIController extends Controller
 {
-    /**
-     * Send a request to the OpenAI GPT model and return the response in JSON format.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function sendRequest()
-    {
+/**
+ * Send a request to the OpenAI GPT model and return the response as a string.
+ *
+ * @return string
+ */
+public function sendRequest()
+{
         // Set up the Guzzle client with the appropriate base URI and authentication headers.
         $client = new Client([
             'base_uri' => 'https://api.openai.com/v1/',
@@ -22,7 +22,7 @@ class OpenAIController extends Controller
                 'Authorization' => 'Bearer ' . env('OPENAI_API_SECRET'),
             ],
         ]);
-    
+
         // Set up the request data.
         $requestData = [
             'model' => 'text-davinci-003',
@@ -33,11 +33,11 @@ class OpenAIController extends Controller
             'frequency_penalty' => 0,
             'presence_penalty' => 0,
         ];
-    
+
         // Send the request to the OpenAI API using the Guzzle client.
         $response = $client->post('completions', [
             'json' => $requestData,
-            ]);
+        ]);
 
         // Get the response body.
         $responseBody = json_decode($response->getBody(), true);
@@ -45,9 +45,10 @@ class OpenAIController extends Controller
         // Extract the generated quiz from the response body.
         $generatedQuiz = $responseBody['choices'][0]['text'];
 
-        // Return the generated quiz in JSON format.
-        return response()->json([
-            'quiz' => $generatedQuiz,
-        ]);
+        // Remove any newline characters from the generated quiz string.
+        $generatedQuiz = str_replace("\n", "", $generatedQuiz);
+
+        // Return the generated quiz as a string.
+        return $generatedQuiz;
     }
 }
