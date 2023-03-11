@@ -28,7 +28,7 @@ class OpenAIController extends Controller
             'model' => 'text-davinci-003',
             'prompt' => 'I want you to create a quiz consisting of 1 question related to anything I tell you. The quiz should have this structure:[Question x][4 answers, numbered a,b,c,d][The letter of the correct answer]The answers should be as factual and accurate as possible, without ambiguity or falsehoods.Only return the quiz in this format, to be directly compatible with Json Format:[  {    \"question\": \"\",    \"options\": [\"\"],    \"correct\": \"\"  }]Highlight the code with backticksThe subject is math.Do not return anything else, just the json.\n\n{    \"question\": \"What is the value of pi?\",    \"options\": [\"3\",\"3.14\",\"6.28\",\"6\"],    \"correct\": \"b\"  }',
             'temperature' => 0.7,
-            'max_tokens' => 256,
+            'max_tokens' => 656,
             'top_p' => 1,
             'frequency_penalty' => 0,
             'presence_penalty' => 0,
@@ -40,7 +40,7 @@ class OpenAIController extends Controller
         ]);
     
         // Return the response in JSON format.
-        return response()->json(json_decode($response->getBody()));
+        return response()->json(json_decode($response->getBody()->getContents()));
     }
     
 }
