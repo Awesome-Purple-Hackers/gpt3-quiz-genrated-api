@@ -8,12 +8,13 @@ use GuzzleHttp\Client;
 class OpenAIController extends Controller
 {
 /**
- * Send a request to the OpenAI GPT model and return the response as a string.
+ * Send a request to the OpenAI GPT model and return the response as an array of JSON objects.
  *
- * @return string
+ * @param int $numQuizzes The number of quizzes to generate.
+ * @return array
  */
-public function sendRequest()
-{
+public function sendRequest($numQuizzes = 1)
+    {
         // Set up the Guzzle client with the appropriate base URI and authentication headers.
         $client = new Client([
             'base_uri' => 'https://api.openai.com/v1/',
@@ -45,10 +46,40 @@ public function sendRequest()
         // Extract the generated quiz from the response body.
         $generatedQuiz = $responseBody['choices'][0]['text'];
 
-        // Remove any newline characters from the generated quiz string.
-        $generatedQuiz = str_replace("\n", "", $generatedQuiz);
+        // Split the generated quiz string into separate quizzes.
+        $quizzes = explode('{', $generatedQuiz);
 
-        // Return the generated quiz as a string.
-        return $generatedQuiz;
+        // Remove the first element of the quizzes array (which is an empty string).
+        array_shift($quizzes);
+
+        // Create a new array to store the JSON objects for each quiz.
+        $quizObjects = [];
+
+        // Loop through the quizzes and create a new JSON object for each one.
+        foreach ($quizzes as $quiz) {
+            // Extract the quiz values from the string.
+            preg_match_all('/"([^"]*)"/', $quiz, $matches);
+
+            // Create a new JSON object for the quiz.
+            $quizObject = [
+                'question' => $matches[1][0],
+                'answer1' => $matches[1][1],
+                'answer2' => $matches[1][2],
+                'answer3' => $matches[1][3],
+                'answer4' => $matches[1][4],
+                'correct_answer' => $matches[1][5],
+            ];
+
+            // Add the quiz object to the array.
+            $quizObjects[] = $quizObject;
+        }
+
+        // If the number of quizzes requested is greater than 1, return a random sample of that many quizzes.
+        if ($numQuizzes > 1) {
+            $quizObjects = array_rand($quizObjects, $numQuizzes);
+        }
+
+        // Return the array of quiz objects.
+        return $quizObjects;
     }
 }
