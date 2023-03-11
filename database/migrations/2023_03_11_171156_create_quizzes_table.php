@@ -15,8 +15,11 @@ return new class extends Migration
     {
         Schema::create('quizzes', function (Blueprint $table) {
             $table->id();
+            $table->string('question');
+            $table->json('options');
+            $table->string('correct_answer');
             $table->timestamps();
-        });
+        });        
     }
 
     /**

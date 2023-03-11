@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
+use App\Models\Quiz;
+
 
 class OpenAIController extends Controller
 {
@@ -60,27 +62,34 @@ public function sendRequest($numQuizzes = 1)
         // Extract the quiz values from the string.
         preg_match_all('/"([^"]*)"/', $quiz, $matches);
 
+        // Create a new quiz object and save it to the database.
+        $quizModel = new Quiz();
+        $quizModel->question = $matches[1][0];
+        $quizModel->options = [
+            [
+                'answer' => $matches[1][1],
+                'isCorrect' => $matches[1][5] === 'a',
+            ],
+            [
+                'answer' => $matches[1][2],
+                'isCorrect' => $matches[1][5] === 'b',
+            ],
+            [
+                'answer' => $matches[1][3],
+                'isCorrect' => $matches[1][5] === 'c',
+            ],
+            [
+                'answer' => $matches[1][4],
+                'isCorrect' => $matches[1][5] === 'd',
+            ],
+        ];
+        $quizModel->correct_answer = $matches[1][5];
+        $quizModel->save();
+
         // Create a new JSON object for the quiz.
         $quizObject = [
-            'question' => $matches[1][0],
-            'options' => [
-                [
-                    'answer' => $matches[1][1],
-                    'isCorrect' => $matches[1][5] === 'a',
-                ],
-                [
-                    'answer' => $matches[1][2],
-                    'isCorrect' => $matches[1][5] === 'b',
-                ],
-                [
-                    'answer' => $matches[1][3],
-                    'isCorrect' => $matches[1][5] === 'c',
-                ],
-                [
-                    'answer' => $matches[1][4],
-                    'isCorrect' => $matches[1][5] === 'd',
-                ],
-            ],
+            'question' => $quizModel->question,
+            'options' => $quizModel->options,
         ];
 
         // Add the quiz object to the array.
@@ -96,24 +105,30 @@ public function sendRequest($numQuizzes = 1)
     return $quizObjects;
     }
 
-
-
     public function getQuizzes(Request $request)
     {
-    // Get the $quizDomain parameter from the request query parameters.
-    $quizDomain = $request->query('quiz_domain');
-    // Call the `sendRequest` method to generate the quizzes, passing the `$quizDomain` variable.
-    $quizzes = $this->sendRequest(1, $quizDomain);
-
-    // Transform the quizzes to the required format.
-    $formattedQuizzes = array_map(function ($quiz) {
-        return [
-            'question' => $quiz['question'],
-            'options' => $quiz['options'],
-        ];
-    }, $quizzes);
-
-    // Return the quizzes as a JSON response with a 200 status code.
-    return response()->json($formattedQuizzes, 200);
-    }
+        // Get the $quizDomain parameter from the request query parameters.
+        $quizDomain = $request->query('quiz_domain');
+    
+        // Retrieve the quizzes from the database.
+        $quizzes = Quiz::all();
+    
+        // If the $quizDomain parameter is set, filter the quizzes by domain.
+        if ($quizDomain) {
+            $quizzes = $quizzes->filter(function ($quiz) use ($quizDomain) {
+                return stripos($quiz->question, $quizDomain) !== false;
+            });
+        }
+    
+        // Transform the quizzes to the required format.
+        $formattedQuizzes = $quizzes->map(function ($quiz) {
+            return [
+                'question' => $quiz->question,
+                'options' => $quiz->options,
+            ];
+        })->toArray();
+    
+        // Return the quizzes as a JSON response with a 200 status code.
+        return response()->json($formattedQuizzes, 200);
+    }      
 }

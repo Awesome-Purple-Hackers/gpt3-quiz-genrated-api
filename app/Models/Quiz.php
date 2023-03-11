@@ -7,5 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Quiz extends Model
 {
-    use HasFactory;
+    protected $fillable = [
+        'question', 'options', 'correct_answer'
+    ];
+
+    protected $casts = [
+        'options' => 'json'
+    ];
 }
