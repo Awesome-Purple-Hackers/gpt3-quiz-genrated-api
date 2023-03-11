@@ -15,7 +15,7 @@ class OpenAIController extends Controller
  * @param int $numQuizzes The number of quizzes to generate.
  * @return array
  */
-public function sendRequest($numQuizzes = 1)
+public function sendRequest($numQuizzes = 1, $saveToDb = true)
 {
     // Set up the Guzzle client with the appropriate base URI and authentication headers.
     $client = new Client([
@@ -62,29 +62,35 @@ public function sendRequest($numQuizzes = 1)
         // Extract the quiz values from the string.
         preg_match_all('/"([^"]*)"/', $quiz, $matches);
 
-        // Create a new quiz object and save it to the database.
-        $quizModel = new Quiz();
-        $quizModel->question = $matches[1][0];
-        $quizModel->options = [
-            [
-                'answer' => $matches[1][1],
-                'isCorrect' => $matches[1][5] === 'a',
-            ],
-            [
-                'answer' => $matches[1][2],
-                'isCorrect' => $matches[1][5] === 'b',
-            ],
-            [
-                'answer' => $matches[1][3],
-                'isCorrect' => $matches[1][5] === 'c',
-            ],
-            [
-                'answer' => $matches[1][4],
-                'isCorrect' => $matches[1][5] === 'd',
-            ],
-        ];
-        $quizModel->correct_answer = $matches[1][5];
-        $quizModel->save();
+        // Check if a quiz with the same question already exists in the database.
+        $existingQuiz = Quiz::where('question', $matches[1][0])->first();
+
+        // If a quiz with the same question already exists, skip saving the quiz to avoid duplicates.
+        if (!$existingQuiz) {
+            // Create a new quiz object and save it to the database.
+            $quizModel = Quiz::create([
+                'question' => $matches[1][0],
+                'options' => [
+                    [
+                        'answer' => $matches[1][1],
+                        'isCorrect' => $matches[1][5] === 'a',
+                    ],
+                    [
+                        'answer' => $matches[1][2],
+                        'isCorrect' => $matches[1][5] === 'b',
+                    ],
+                    [
+                        'answer' => $matches[1][3],
+                        'isCorrect' => $matches[1][5] === 'c',
+                    ],
+                    [
+                        'answer' => $matches[1][4],
+                        'isCorrect' => $matches[1][5] === 'd',
+                    ],
+                ],
+                'correct_answer' => $matches[1][5],
+            ]);
+        }
 
         // Create a new JSON object for the quiz.
         $quizObject = [
@@ -111,24 +117,21 @@ public function sendRequest($numQuizzes = 1)
         $quizDomain = $request->query('quiz_domain');
     
         // Retrieve the quizzes from the database.
-        $quizzes = Quiz::all();
-    
+        $quizzes = $this->sendRequest(1);
+
         // If the $quizDomain parameter is set, filter the quizzes by domain.
         if ($quizDomain) {
-            $quizzes = $quizzes->filter(function ($quiz) use ($quizDomain) {
-                return stripos($quiz->question, $quizDomain) !== false;
-            });
+            $quizzes = collect($quizzes)->filter(function ($quiz) use ($quizDomain) {
+                return stripos($quiz['question'], $quizDomain) !== false;
+            })->toArray();
+        }
+        // If the number of quizzes requested is greater than 1, return a random sample of that many quizzes.
+        $numQuizzes = $request->query('num_quizzes', 1);
+        if ($numQuizzes > 1) {
+            $quizzes = collect($quizzes)->random($numQuizzes)->toArray();
         }
     
-        // Transform the quizzes to the required format.
-        $formattedQuizzes = $quizzes->map(function ($quiz) {
-            return [
-                'question' => $quiz->question,
-                'options' => $quiz->options,
-            ];
-        })->toArray();
-    
         // Return the quizzes as a JSON response with a 200 status code.
-        return response()->json($formattedQuizzes, 200);
-    }      
+        return response()->json($quizzes, 200);
+    }        
 }
