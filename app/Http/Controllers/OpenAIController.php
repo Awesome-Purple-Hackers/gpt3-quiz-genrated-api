@@ -37,17 +37,24 @@ class OpenAIController extends Controller
         // Send the request to the OpenAI API using the Guzzle client.
         $response = $client->post('completions', [
             'json' => $requestData,
-            ]);
-
+        ]);
+    
         // Get the response body.
         $responseBody = json_decode($response->getBody(), true);
-
+    
         // Extract the generated quiz from the response body.
         $generatedQuiz = $responseBody['choices'][0]['text'];
-
-        // Return the generated quiz in JSON format.
+    
+        // Decode the generated quiz as JSON.
+        $decodedQuiz = json_decode($generatedQuiz, true);
+    
+        // Return the generated quiz in the format you need.
         return response()->json([
-            'quiz' => $generatedQuiz,
+            [
+                'question' => $decodedQuiz['question'],
+                'options' => $decodedQuiz['options'],
+                'correct' => $decodedQuiz['correct']
+            ]
         ]);
-    }
+    }    
 }
