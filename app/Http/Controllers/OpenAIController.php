@@ -111,32 +111,31 @@ public function sendRequest($numQuizzes = 1, $saveToDb = true)
                 $quizObjects = array_rand($quizObjects, $numQuizzes);
             }
 
-            // Return the array of quiz objects.
-            return $quizObjects;
+        // Return the array of quiz objects.
+        return $quizObjects;
+        } // <-- Add this closing curly brace
 
+        public function getQuizzes(Request $request)
+        {
+            // Get the $quizDomain parameter from the request query parameters.
+            $quizDomain = $request->query('quiz_domain');
 
+            // Retrieve the quizzes from the database.
+            $quizzes = $this->sendRequest(1);
 
-    public function getQuizzes(Request $request)
-    {
-        // Get the $quizDomain parameter from the request query parameters.
-        $quizDomain = $request->query('quiz_domain');
-    
-        // Retrieve the quizzes from the database.
-        $quizzes = $this->sendRequest(1);
+            // If the $quizDomain parameter is set, filter the quizzes by domain.
+            if ($quizDomain) {
+                $quizzes = collect($quizzes)->filter(function ($quiz) use ($quizDomain) {
+                    return stripos($quiz['question'], $quizDomain) !== false;
+                })->toArray();
+            }
+            // If the number of quizzes requested is greater than 1, return a random sample of that many quizzes.
+            $numQuizzes = $request->query('num_quizzes', 1);
+            if ($numQuizzes > 1) {
+                $quizzes = collect($quizzes)->random($numQuizzes)->toArray();
+            }
 
-        // If the $quizDomain parameter is set, filter the quizzes by domain.
-        if ($quizDomain) {
-            $quizzes = collect($quizzes)->filter(function ($quiz) use ($quizDomain) {
-                return stripos($quiz['question'], $quizDomain) !== false;
-            })->toArray();
-        }
-        // If the number of quizzes requested is greater than 1, return a random sample of that many quizzes.
-        $numQuizzes = $request->query('num_quizzes', 1);
-        if ($numQuizzes > 1) {
-            $quizzes = collect($quizzes)->random($numQuizzes)->toArray();
-        }
-    
-        // Return the quizzes as a JSON response with a 200 status code.
-        return response()->json($quizzes, 200);
-    }        
+            // Return the quizzes as a JSON response with a 200 status code.
+            return response()->json($quizzes, 200);
+        }       
 }
